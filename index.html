@@ -6,10 +6,11 @@
   <title>Simulasi PCR</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; background: #f4f4f4; }
-    h1 { text-align: left; }
+    h1 { text-align: center; }
     table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 12px; }
     th, td { border: 1px solid #ccc; padding: 4px; text-align: center; }
     td.highlight { background-color: #4caf50; color: white; }
+    td.left-align { text-align: left; }
     .action-btn { cursor: pointer; color: blue; text-decoration: underline; }
     .hidden { display: none; }
     input[type="text"], input[type="date"] { width: 100%; box-sizing: border-box; }
@@ -26,7 +27,6 @@
     <thead>
       <tr id="headerRow">
         <th>No</th><th>Equip</th><th>Description</th><th>Start</th><th>Finish</th><th>Duration</th>
-        <!-- Kolom tanggal 1–31 -->
         <script>
           document.write([...Array(31)].map((_, i) => `<th>${i + 1}</th>`).join(''));
         </script>
@@ -51,7 +51,7 @@
       row.innerHTML = `
         <td>${index}</td>
         <td><input type="text" id="equip-${index}" /></td>
-        <td><input type="text" id="desc-${index}" /></td>
+        <td><input type="text" id="desc-${index}" class="left-align" /></td>
         <td colspan="3"></td>
         ${Array.from({length: 31}, () => '<td></td>').join('')}
         <td><span class="action-btn" onclick="saveMainTask(${index})">Save</span></td>
@@ -81,7 +81,7 @@
         row.innerHTML = `
           <td>${i + 1}</td>
           <td>${task.equip}</td>
-          <td>${task.desc}</td>
+          <td class="left-align">${task.desc}</td>
           <td>${start ? start.toISOString().split('T')[0] : ''}</td>
           <td>${finish ? finish.toISOString().split('T')[0] : ''}</td>
           <td>${duration}</td>
@@ -98,7 +98,7 @@
             subRow.innerHTML = `
               <td>${i + 1}.${j + 1}</td>
               <td>${task.equip}</td>
-              <td>${sub.desc}</td>
+              <td class="left-align">${sub.desc}</td>
               <td>${sub.start}</td>
               <td>${sub.finish}</td>
               <td>${dur}</td>
@@ -115,7 +115,7 @@
           formRow.innerHTML = `
             <td>${i + 1}.${task.subtasks.length + 1}</td>
             <td>${task.equip}</td>
-            <td><input type="text" id="subdesc-${i}" /></td>
+            <td><input type="text" id="subdesc-${i}" class="left-align" /></td>
             <td><input type="date" id="substart-${i}" /></td>
             <td><input type="date" id="subfinish-${i}" /></td>
             <td></td>
