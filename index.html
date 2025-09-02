@@ -1,0 +1,180 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Simulasi PCR</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f4f4f4; }
+    h1 { text-align: center; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 12px; }
+    th, td { border: 1px solid #ccc; padding: 4px; text-align: center; }
+    td.highlight { background-color: #4caf50; color: white; }
+    .action-btn { cursor: pointer; color: blue; text-decoration: underline; }
+    .hidden { display: none; }
+    input[type="text"], input[type="date"] { width: 100%; box-sizing: border-box; }
+    .main-row { background-color: #e0e0e0; font-weight: bold; cursor: pointer; }
+    .subtask-row { background-color: #fff; }
+    .form-row td { background-color: #ffffe0; }
+    button { margin-top: 10px; padding: 6px 12px; }
+  </style>
+</head>
+<body>
+  <h1>Simulasi PCR</h1>
+
+  <table id="taskTable">
+    <thead>
+      <tr id="headerRow">
+        <th>No</th>
+        <th>Equip</th>
+        <th>Description</th>
+        <th>Start</th>
+        <th>Finish</th>
+        <th>Duration</th>
+        <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th><th>15</th><th>16</th><th>17</th><th>18</th><th>19</th><th>20</th><th>21</th><th>22</th><th>23</th><th>24</th><th>25</th><th>26</th><th>27</th><th>28</th><th>29</th><th>30</th><th>31</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody id="taskBody"></tbody>
+  </table>
+
+  <button onclick="addMainTask()">➕ Add New</button>
+
+  <script>
+    let tasks = [];
+
+    function addMainTask() {
+      const tbody = document.getElementById('taskBody');
+      const index = tasks.length + 1;
+      const row = document.createElement('tr');
+      row.className = 'form-row';
+      row.innerHTML = `
+        <td>${index}</td>
+        <td><input type="text" id="equip-${index}" /></td>
+        <td><input type="text" id="desc-${index}" /></td>
+        <td colspan="3"></td>
+        ${Array.from({length: 31}, () => '<td></td>').join('')}
+        <td><span class="action-btn" onclick="saveMainTask(${index})">Save</span></td>
+      `;
+      tbody.appendChild(row);
+    }
+
+    function saveMainTask(index) {
+      const equip = document.getElementById(`equip-${index}`).value;
+      const desc = document.getElementById(`desc-${index}`).value;
+      if (!equip || !desc) return alert("Lengkapi Equip dan Judul");
+
+      const task = { equip, desc, subtasks: [], collapsed: false };
+      tasks.push(task);
+      renderTable();
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('taskBody');
+      tbody.innerHTML = '';
+      tasks.forEach((task, i) => {
+        const row = document.createElement('tr');
+        row.className = 'main-row';
+        row.onclick = () => toggleSubtasks(i);
+        const [start, finish] = getStartFinish(task.subtasks);
+        const duration = start && finish ? Math.round((finish - start) / (1000 * 60 * 60)) : '';
+        row.innerHTML = `
+          <td>${i + 1}</td>
+          <td>${task.equip}</td>
+          <td>${task.desc}</td>
+          <td>${start ? start.toISOString().split('T')[0] : ''}</td>
+          <td>${finish ? finish.toISOString().split('T')[0] : ''}</td>
+          <td>${duration}</td>
+          ${renderHighlight(start, finish)}
+          <td><span class="action-btn" onclick="event.stopPropagation(); showSubForm(${i})">Add Sub</span></td>
+        `;
+        tbody.appendChild(row);
+
+        if (!task.collapsed) {
+          task.subtasks.forEach((sub, j) => {
+            const subRow = document.createElement('tr');
+            subRow.className = 'subtask-row';
+            const sDay = new Date(sub.start).getDate();
+            const eDay = new Date(sub.finish).getDate();
+            const dur = Math.round((new Date(sub.finish) - new Date(sub.start)) / (1000 * 60 * 60));
+            subRow.innerHTML = `
+              <td>${i + 1}.${j + 1}</td>
+              <td>${task.equip}</td>
+              <td>${sub.desc}</td>
+              <td>${sub.start}</td>
+              <td>${sub.finish}</td>
+              <td>${dur}</td>
+              ${renderHighlight(new Date(sub.start), new Date(sub.finish))}
+              <td><span class="action-btn" onclick="deleteSub(${i}, ${j})">Hapus</span></td>
+            `;
+            tbody.appendChild(subRow);
+          });
+        }
+
+        if (task.showForm) {
+          const formRow = document.createElement('tr');
+          formRow.className = 'form-row';
+          formRow.innerHTML = `
+            <td>${i + 1}.${task.subtasks.length + 1}</td>
+            <td>${task.equip}</td>
+            <td><input type="text" id="subdesc-${i}" /></td>
+            <td><input type="date" id="substart-${i}" /></td>
+            <td><input type="date" id="subfinish-${i}" /></td>
+            <td></td>
+            ${Array.from({length: 31}, () => '<td></td>').join('')}
+            <td><span class="action-btn" onclick="saveSub(${i})">Save</span></td>
+          `;
+          tbody.appendChild(formRow);
+        }
+      });
+    }
+
+    function renderHighlight(start, finish) {
+      const cells = [];
+      for (let d = 1; d <= 31; d++) {
+        if (start && finish) {
+          const s = start.getDate(), e = finish.getDate();
+          cells.push(`<td class="${d >= s && d <= e ? 'highlight' : ''}">${d >= s && d <= e ? '●' : ''}</td>`);
+        } else {
+          cells.push('<td></td>');
+        }
+      }
+      return cells.join('');
+    }
+
+    function getStartFinish(subs) {
+      if (!subs.length) return [null, null];
+      const dates = subs.map(s => [new Date(s.start), new Date(s.finish)]);
+      const start = new Date(Math.min(...dates.map(d => d[0])));
+      const finish = new Date(Math.max(...dates.map(d => d[1])));
+      return [start, finish];
+    }
+
+    function showSubForm(i) {
+      tasks[i].showForm = true;
+      renderTable();
+    }
+
+    function saveSub(i) {
+      const desc = document.getElementById(`subdesc-${i}`).value;
+      const start = document.getElementById(`substart-${i}`).value;
+      const finish = document.getElementById(`subfinish-${i}`).value;
+      if (!desc || !start || !finish) return alert("Lengkapi subtask");
+      tasks[i].subtasks.push({ desc, start, finish });
+      tasks[i].showForm = false;
+      renderTable();
+    }
+
+    function deleteSub(i, j) {
+      tasks[i].subtasks.splice(j, 1);
+      renderTable();
+    }
+
+    function toggleSubtasks(i) {
+      tasks[i].collapsed = !tasks[i].collapsed;
+      renderTable();
+    }
+  </script>
+</body>
+</html>
+
