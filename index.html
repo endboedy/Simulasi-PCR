@@ -6,7 +6,7 @@
   <title>Simulasi PCR</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; background: #f4f4f4; }
-    h1 { text-align: center; }
+    h1 { text-align: left; }
     table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 12px; }
     th, td { border: 1px solid #ccc; padding: 4px; text-align: center; }
     td.highlight { background-color: #4caf50; color: white; }
@@ -25,13 +25,11 @@
   <table id="taskTable">
     <thead>
       <tr id="headerRow">
-        <th>No</th>
-        <th>Equip</th>
-        <th>Description</th>
-        <th>Start</th>
-        <th>Finish</th>
-        <th>Duration</th>
-        <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th><th>15</th><th>16</th><th>17</th><th>18</th><th>19</th><th>20</th><th>21</th><th>22</th><th>23</th><th>24</th><th>25</th><th>26</th><th>27</th><th>28</th><th>29</th><th>30</th><th>31</th>
+        <th>No</th><th>Equip</th><th>Description</th><th>Start</th><th>Finish</th><th>Duration</th>
+        <!-- Kolom tanggal 1–31 -->
+        <script>
+          document.write([...Array(31)].map((_, i) => `<th>${i + 1}</th>`).join(''));
+        </script>
         <th>Aksi</th>
       </tr>
     </thead>
@@ -39,6 +37,8 @@
   </table>
 
   <button onclick="addMainTask()">➕ Add New</button>
+  <button onclick="saveToJSON()">💾 Save JSON</button>
+  <input type="file" id="loadJson" accept=".json" onchange="loadFromJSON()" />
 
   <script>
     let tasks = [];
@@ -94,8 +94,6 @@
           task.subtasks.forEach((sub, j) => {
             const subRow = document.createElement('tr');
             subRow.className = 'subtask-row';
-            const sDay = new Date(sub.start).getDate();
-            const eDay = new Date(sub.finish).getDate();
             const dur = Math.round((new Date(sub.finish) - new Date(sub.start)) / (1000 * 60 * 60));
             subRow.innerHTML = `
               <td>${i + 1}.${j + 1}</td>
@@ -173,6 +171,35 @@
     function toggleSubtasks(i) {
       tasks[i].collapsed = !tasks[i].collapsed;
       renderTable();
+    }
+
+    function saveToJSON() {
+      const dataStr = JSON.stringify(tasks, null, 2);
+      const blob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "simulasi_pcr.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function loadFromJSON() {
+      const fileInput = document.getElementById("loadJson");
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          const loadedTasks = JSON.parse(e.target.result);
+          tasks = loadedTasks;
+          renderTable();
+        } catch (err) {
+          alert("File JSON tidak valid.");
+        }
+      };
+      reader.readAsText(file);
     }
   </script>
 </body>
