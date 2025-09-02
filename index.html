@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -11,7 +10,7 @@
     th, td { border: 1px solid #ccc; padding: 4px; text-align: center; }
     td.highlight { background-color: #4caf50; color: white; }
     td.left-align { text-align: left; }
-    .action-btn { cursor: pointer; color: blue; text-decoration: underline; }
+    .action-btn { cursor: pointer; color: blue; text-decoration: underline; margin: 0 4px; }
     .hidden { display: none; }
     input[type="text"], input[type="date"] { width: 100%; box-sizing: border-box; }
     .main-row { background-color: #e0e0e0; font-weight: bold; cursor: pointer; }
@@ -94,17 +93,39 @@
           task.subtasks.forEach((sub, j) => {
             const subRow = document.createElement('tr');
             subRow.className = 'subtask-row';
-            const dur = Math.round((new Date(sub.finish) - new Date(sub.start)) / (1000 * 60 * 60));
-            subRow.innerHTML = `
-              <td>${i + 1}.${j + 1}</td>
-              <td>${task.equip}</td>
-              <td class="left-align">${sub.desc}</td>
-              <td>${sub.start}</td>
-              <td>${sub.finish}</td>
-              <td>${dur}</td>
-              ${renderHighlight(new Date(sub.start), new Date(sub.finish))}
-              <td><span class="action-btn" onclick="deleteSub(${i}, ${j})">Hapus</span></td>
-            `;
+
+            if (sub.editing) {
+              // Form edit
+              subRow.innerHTML = `
+                <td>${i + 1}.${j + 1}</td>
+                <td>${task.equip}</td>
+                <td><input type="text" id="edit-desc-${i}-${j}" value="${sub.desc}" class="left-align" /></td>
+                <td><input type="date" id="edit-start-${i}-${j}" value="${sub.start}" /></td>
+                <td><input type="date" id="edit-finish-${i}-${j}" value="${sub.finish}" /></td>
+                <td></td>
+                ${Array.from({length: 31}, () => '<td></td>').join('')}
+                <td>
+                  <span class="action-btn" onclick="saveEditSub(${i}, ${j})">✔ Save</span>
+                  <span class="action-btn" onclick="cancelEditSub(${i}, ${j})">✖ Cancel</span>
+                </td>
+              `;
+            } else {
+              const dur = Math.round((new Date(sub.finish) - new Date(sub.start)) / (1000 * 60 * 60));
+              subRow.innerHTML = `
+                <td>${i + 1}.${j + 1}</td>
+                <td>${task.equip}</td>
+                <td class="left-align">${sub.desc}</td>
+                <td>${sub.start}</td>
+                <td>${sub.finish}</td>
+                <td>${dur}</td>
+                ${renderHighlight(new Date(sub.start), new Date(sub.finish))}
+                <td>
+                  <span class="action-btn" onclick="editSub(${i}, ${j})">Edit</span>
+                  <span class="action-btn" onclick="deleteSub(${i}, ${j})">Hapus</span>
+                </td>
+              `;
+            }
+
             tbody.appendChild(subRow);
           });
         }
@@ -160,6 +181,26 @@
       if (!desc || !start || !finish) return alert("Lengkapi subtask");
       tasks[i].subtasks.push({ desc, start, finish });
       tasks[i].showForm = false;
+      renderTable();
+    }
+
+    function editSub(i, j) {
+      tasks[i].subtasks[j].editing = true;
+      renderTable();
+    }
+
+    function saveEditSub(i, j) {
+      const desc = document.getElementById(`edit-desc-${i}-${j}`).value;
+      const start = document.getElementById(`edit-start-${i}-${j}`).value;
+      const finish = document.getElementById(`edit-finish-${i}-${j}`).value;
+      if (!desc || !start || !finish) return alert("Lengkapi subtask");
+
+      tasks[i].subtasks[j] = { desc, start, finish };
+      renderTable();
+    }
+
+    function cancelEditSub(i, j) {
+      tasks[i].subtasks[j].editing = false;
       renderTable();
     }
 
